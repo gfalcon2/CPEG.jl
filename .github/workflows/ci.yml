@@ -1,0 +1,28 @@
+name: Native Julia tests
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      JULIA_PKG_PRECOMPILE_AUTO: '0'
+      OPENBLAS_NUM_THREADS: '1'
+      # MATLAB.jl supports installation in CI without a MATLAB runtime.
+      # These tests exercise native Julia; MATLAB research scripts are excluded.
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+      - uses: julia-actions/cache@v2
+      - name: Instantiate and run native tests
+        run: >-
+          julia --startup-file=no --compiled-modules=existing --project=.
+          -e 'using Pkg; Pkg.instantiate(); Pkg.test(; julia_args=["--compiled-modules=existing"])'
